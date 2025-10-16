@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>幻境漫游向导</title>
+  <style>
+    body {
+      font-family: 'KaiTi', 'STKaiti', serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1e3c72, #2a5298, #759ecc);
+      color: #f0f8ff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .container {
+      width: 90%;
+      max-width: 800px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 10;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-top: 0;
+      color: #e6f7ff;
+      text-shadow: 0 0 10px rgba(173, 216, 230, 0.5);
+    }
+    .subtitle {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      color: #b0e0e6;
+    }
+    .scene-selector {
+      margin: 20px 0;
+    }
+    .scene-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid #5f9ea0;
+      color: #e0ffff;
+      padding: 12px 20px;
+      margin: 0 10px 10px 0;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: all 0.3s ease;
+    }
+    .scene-btn:hover, .scene-btn.active {
+      background: rgba(95, 158, 160, 0.6);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    .controls {
+      margin: 25px 0;
+    }
+    .control-btn {
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: white;
+      border: none;
+      padding: 14px 30px;
+      margin: 0 10px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1.1em;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .control-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0, 242, 254, 0.4);
+    }
+    .control-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .visualizer {
+      height: 200px;
+      margin: 30px 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: 15px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .wave {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg"><path fill="rgba(176,224,230,0.2)" d="M0,150 Q250,50 500,150 T1000,150 L1000,200 L0,200 Z"/></svg>');
+      background-size: cover;
+      animation: waveAnimation 12s linear infinite;
+    }
+    @keyframes waveAnimation {
+      0% { background-position-x: 0; }
+      100% { background-position-x: 1000px; }
+    }
+    .bubbles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(176, 224, 230, 0.3);
+      bottom: -50px;
+    }
+    .guide-text {
+      font-size: 1.3em;
+      line-height: 1.8;
+      min-height: 100px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 15px;
+      margin: 20px 0;
+      color: #f0f8ff;
+      font-style: italic;
+    }
+    .timer {
+      font-size: 1.5em;
+      margin: 15px 0;
+      color: #e0ffff;
+    }
+    .progress-container {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .breathing-hint {
+      font-size: 1.1em;
+      color: #b0e0e6;
+      margin-top: 10px;
+    }
+    .footer {
+      margin-top: 20px;
+      color: #a9a9a9;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌊 幻境漫游向导</h1>
+    <p class="subtitle">欢迎来到您的宁静空间，我是您的AI向导，将陪伴您进行一次深度放松之旅</p>
+
+    <div class="scene-selector">
+      <p>请选择您的冥想场景：</p>
+      <button class="scene-btn active" data-scene="beach">🏖️ 海滨沙滩</button>
+      <button class="scene-btn" data-scene="forest">🌲 森林小径</button>
+      <button class="scene-btn" data-scene="mountain">⛰️ 山间云海</button>
+      <button class="scene-btn" data-scene="space">🌌 星空宇宙</button>
+    </div>
+
+    <div class="controls">
+      <button class="control-btn" id="start-btn">开始引导</button>
+      <button class="control-btn" id="pause-btn" disabled>暂停</button>
+      <button class="control-btn" id="stop-btn" disabled>结束</button>
+    </div>
+
+    <div class="timer" id="timer">倒计时: 10:00</div>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="visualizer">
+      <div class="wave"></div>
+      <div class="bubbles" id="bubbles-container"></div>
+    </div>
+
+    <div class="guide-text" id="guide-text">
+      欢迎踏上这段宁静之旅。请找一个舒适的位置坐下，轻轻闭上双眼，让呼吸变得深长而平缓...
+    </div>
+
+    <div class="breathing-hint" id="breathing-hint">准备：深呼吸，吸气... 屏息... 呼气...</div>
+
+    <div class="footer">
+      专注于当下，让心灵回归平静。每一次呼吸都是一次新的开始。
+    </div>
+  </div>
+
+  <script>
+    // 状态管理
+    let state = {
+      currentScene: 'beach',
+      isPlaying: false,
+      isPaused: false,
+      totalDuration: 10 * 60, // 10分钟
+      remainingTime: 10 * 60,
+      timerInterval: null,
+      guideTexts: {
+        beach: [
+          "现在，您正站在一片宁静的沙滩上，海浪轻柔地拍打着您的脚踝...",
+          "海风带着淡淡的咸味，轻抚过您的面庞，带走所有烦恼...",
+          "聆听海浪的节拍，让它成为您呼吸的韵律...",
+          "感受阳光洒在背上的温暖，身体逐渐放松...",
+          "每一次呼吸，都像海浪一样平缓而有节奏...",
+          "现在，您可以慢慢睁开眼睛，感受内心的宁静。"
+        ],
+        forest: [
+          "您走在一条被阳光斑驳照亮的森林小径上...",
+          "周围是高大的树木，空气中弥漫着清新的泥土和树叶的气息...",
+          "鸟儿在枝头轻柔地歌唱，远处有潺潺的溪水声...",
+          "每一步都踏在柔软的苔藓上，感觉与大自然融为一体...",
+          "深深吸一口森林的空气，让纯净的能量充满您的身体...",
+          "当您准备好时，可以缓缓回到现实世界。"
+        ],
+        mountain: [
+          "您站在高山之巅，四周是连绵起伏的山峦和飘渺的云海...",
+          "稀薄的空气让您每一次呼吸都更加深沉，更加珍贵...",
+          "微风带来远山的清香，吹散了心中的杂念...",
+          "在这一刻，您感受到无比的开阔与自由...",
+          "让山峰的沉稳力量注入您的内心，带来持久的平静...",
+          "慢慢地，您可以带着这份力量回到日常生活中。"
+        ],
+        space: [
+          "您漂浮在浩瀚的宇宙中，周围是闪烁的星辰和遥远的星系...",
+          "没有重力，没有束缚，只有无尽的宁静与广阔...",
+          "每一颗星星都像是一个美好的愿望，静静地陪伴着您...",
+          "在这无限的空间里，您的心灵也变得无限宽广...",
+          "感受宇宙的能量流经您的身体，带来深层的修复与平衡...",
+          "当引导结束时，星光会引领您回到温暖的地球。"
+        ]
+      },
+      currentTextIndex: 0
+    };
+
+    // DOM元素
+    const startBtn = document.getElementById('start-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const timerDisplay = document.getElementById('timer');
+    const progressBar = document.getElementById('progress-bar');
+    const guideText = document.getElementById('guide-text');
+    const breathingHint = document.getElementById('breathing-hint');
+    const sceneButtons = document.querySelectorAll('.scene-btn');
+    const bubblesContainer = document.getElementById('bubbles-container');
+
+    // 初始化
+    function init() {
+      updateTimerDisplay();
+      attachEventListeners();
+    }
+
+    // 附加事件监听器
+    function attachEventListeners() {
+      startBtn.addEventListener('click', startGuidance);
+      pauseBtn.addEventListener('click', pauseGuidance);
+      stopBtn.addEventListener('click', stopGuidance);
+
+      sceneButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          if (!state.isPlaying) {
+            sceneButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            state.currentScene = this.dataset.scene;
+            resetExperience();
+          }
+        });
+      });
+    }
+
+    // 开始引导
+    function startGuidance() {
+      if (state.isPlaying && !state.isPaused) return;
+
+      state.isPlaying = true;
+      state.isPaused = false;
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      stopBtn.disabled = false;
+
+      if (!state.timerInterval) {
+        state.timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      // 开始引导文本轮播
+      if (state.currentTextIndex === 0) {
+        guideText.textContent = state.guideTexts[state.currentScene][0];
+      }
+      startTextCycle();
+
+      // 开始视觉效果
+      createBubbles();
+    }
+
+    // 暂停引导
+    function pauseGuidance() {
+      if (!state.isPlaying || state.isPaused) return;
+
+      state.isPaused = true;
+      pauseBtn.textContent = '继续';
+      startBtn.disabled = false;
+      pauseBtn.disabled = false;
+      stopBtn.disabled = false;
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+    }
+
+    // 继续引导
+    function resumeGuidance() {
+      state.isPaused = false;
+      pauseBtn.textContent = '暂停';
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      stopBtn.disabled = false;
+      state.timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    // 停止引导
+    function stopGuidance() {
+      state.isPlaying = false;
+      state.isPaused = false;
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      stopBtn.disabled = true;
+      pauseBtn.textContent = '暂停';
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+      state.currentTextIndex = 0;
+      guideText.textContent = "欢迎踏上这段宁静之旅。请找一个舒适的位置坐下，轻轻闭上双眼，让呼吸变得深长而平缓...";
+      breathingHint.textContent = "准备：深呼吸，吸气... 屏息... 呼气...";
+      resetVisuals();
+    }
+
+    // 重置体验
+    function resetExperience() {
+      state.currentTextIndex = 0;
+      state.remainingTime = state.totalDuration;
+      updateTimerDisplay();
+      progressBar.style.width = '0%';
+      guideText.textContent = state.guideTexts[state.currentScene][0];
+      breathingHint.textContent = "准备：深呼吸，吸气... 屏息... 呼气...";
+      resetVisuals();
+      
+      if (!state.isPlaying) {
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+      }
+    }
+
+    // 重置视觉效果
+    function resetVisuals() {
+      bubblesContainer.innerHTML = '';
+    }
+
+    // 更新计时器
+    function updateTimer() {
+      if (state.isPaused) return;
+
+      state.remainingTime--;
+      updateTimerDisplay();
+
+      // 更新进度条
+      const progressPercent = ((state.totalDuration - state.remainingTime) / state.totalDuration) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+
+      // 更新呼吸提示
+      updateBreathingHint();
+
+      // 检查是否结束
+      if (state.remainingTime <= 0) {
+        endGuidance();
+      }
+    }
+
+    // 更新计时器显示
+    function updateTimerDisplay() {
+      const minutes = Math.floor(state.remainingTime / 60);
+      const seconds = state.remainingTime % 60;
+      timerDisplay.textContent = `倒计时: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // 更新呼吸提示
+    function updateBreathingHint() {
+      const phase = Math.floor((state.totalDuration - state.remainingTime) / 5) % 4; // 每5秒一个阶段
+      switch(phase) {
+        case 0:
+          breathingHint.textContent = "深吸气... (4秒)";
+          break;
+        case 1:
+          breathingHint.textContent = "屏住呼吸... (4秒)";
+          break;
+        case 2:
+          breathingHint.textContent = "缓慢呼气... (6秒)";
+          break;
+        case 3:
+          breathingHint.textContent = "暂停... (2秒)";
+          break;
+      }
+    }
+
+    // 开始引导文本循环
+    function startTextCycle() {
+      // 每隔一段时间显示下一段引导词
+      const textInterval = setInterval(() => {
+        if (!state.isPlaying || state.isPaused) {
+          clearInterval(textInterval);
+          return;
+        }
+
+        state.currentTextIndex++;
+        if (state.currentTextIndex >= state.guideTexts[state.currentScene].length) {
+          state.currentTextIndex = state.guideTexts[state.currentScene].length - 1; // 保持在最后一段
+          clearInterval(textInterval);
+          return;
+        }
+
+        guideText.textContent = state.guideTexts[state.currentScene][state.currentTextIndex];
+      }, 30000); // 每30秒切换一次引导词
+    }
+
+    // 结束引导
+    function endGuidance() {
+      guideText.textContent = state.guideTexts[state.currentScene][state.guideTexts[state.currentScene].length - 1];
+      breathingHint.textContent = "旅程结束，带着平静与力量回到现实...";
+      stopGuidance();
+    }
+
+    // 创建视觉泡泡效果
+    function createBubbles() {
+      if (!state.isPlaying || state.isPaused) return;
+
+      const bubble = document.createElement('div');
+      bubble.classList.add('bubble');
+      
+      // 随机大小和位置
+      const size = Math.random() * 30 + 10;
+      bubble.style.width = `${size}px`;
+      bubble.style.height = `${size}px`;
+      bubble.style.left = `${Math.random() * 100}%`;
+      
+      // 动画
+      bubble.animate([
+        { bottom: '-50px', opacity: 0.5 },
+        { bottom: '200px', opacity: 0 }
+      ], {
+        duration: Math.random() * 5000 + 5000,
+        easing: 'ease-out'
+      });
+
+      bubblesContainer.appendChild(bubble);
+
+      // 自动移除泡泡
+      setTimeout(() => {
+        if (bubble.parentNode) {
+          bubble.parentNode.removeChild(bubble);
+        }
+      }, 6000);
+
+      // 继续创建新泡泡
+      if (state.isPlaying && !state.isPaused) {
+        setTimeout(createBubbles, Math.random() * 1000 + 500);
+      }
+    }
+
+    // 初始化应用
+    window.onload = init;
+  </script>
+</body>
+</html>
+
+
+
